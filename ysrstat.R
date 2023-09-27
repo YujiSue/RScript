@@ -1,7 +1,7 @@
 
 rearrangeDF<-function(data, type="table", dir="V", nfactor=1) {
     if (type=="table") {
-        if (nfactor = 1) {
+        if (nfactor == 1) {
             value <- c()
             factor <- c()
             if (dir == "V") {
