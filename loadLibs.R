@@ -1,7 +1,7 @@
 loadLibraries <- function(libs) {
   for (lib in libs) {
     if(!requireNamespace(lib, quietly=TRUE)) install.packages(lib, quiet=TRUE)
-    library(lib)
+    library(lib,character.only = TRUE)
   }
 }
 loadBMLibraries <- function(libs) {
