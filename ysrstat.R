@@ -87,54 +87,104 @@ fisherTest<-function(data) {
     }
 }
 mcnemarTest<-function(data) {
-    colnames <- colnames(data)
-    cnum <- length(colnames) - 1
-    mat <- matrix(rep(0, cnum * 2), nrow = 2)
-    mat[1,1] = data[1, 2]
-    mat[1,2] = data[1, 3]
-    mat[2,1] = data[2, 2]
-    mat[2,2] = data[2, 3]
+    factor1 <- colnames(data)[2:ncol(data)]
+    factor2 <- data[,1]
+    ret <- list(
+        title = "",
+        factor = list(
+            '1' <- factor1,
+            '2' <- factor2
+        ),
+        test = list(
+            statistic = NA,
+            pvalue = NA,
+            df = NA
+        )        
+    )
+    mat <- matrix(c(data[1, 2], data[1, 2], data[2, 2], data[2, 3]), nrow = 2, byrow=T)
     res <- mcnemar.test(mat)
-
+    ret$title = res$method
+    ret$test$statistic = unname(res$statistic)
+    ret$test$pvalue = res$p.value
+    ret$test$df = unname(res$parameter)
+    return(structure(ret))
 }
-normalityTest <- function(data, method) {
+normalityTest <- function(data, method, alternative="two.sided") {
+    colnames <- colnames(data)
+    cnum <- length(colnames)
     if (method == "ad") {
         loadLibraries(c("nortest"))        
     }
-    colnames <- colnames(data)
-    cnum <- length(colnames)
-    pvals <- c()
+    ret <- list(
+        title = "",
+        labels = colnames,
+        test = list(
+            count = rep(NA, cnum),
+            statistic = rep(NA, cnum),
+            pvalue = rep(NA, cnum)
+        )        
+    )
     for (f in c(1:cnum)) {
-        dat <- data[,1]
-        if (method == "ks") res = ks.test(dat, "pnorm", mean = mean(dat), sd = sd(dat))
-        else if (method == "sw") res = shapiro.test(dat)
-        else if (method == "ad") res = ad.test(dat)
-        pvals <- append(pvals, res$p.value)
+        dat <- data[!is.na(data[,f]),f]
+        if (method == "ks") {
+            ret$alternative = alternative,
+            res <- ks.test(dat, "pnorm", mean = mean(dat), sd = sd(dat), alternative = alternative)
+        }
+        else if (method == "sw") res <- shapiro.test(dat)
+        else if (method == "ad") res <- ad.test(dat)
+        ret$test$count[f] <- length(dat)
+        ret$test$statistic[f] <- res$statistic
+        ret$test$pvalue[f] <- res$p.value
+        if (f == 1) ret$title <- res$method
     }
-    structure(
-        list(
-            method=res$method,
-            array=list(
-                title=factors,
-                pvalue=pvals
-            )
+    return(structure(ret))
+}
+
+
+rearrange.df<-function(data) {
+    colnames<-colnames(data)
+    cnum<-length(colnames)
+    value<-c()
+    group<-c()
+    for (g in c(1:cnum)) {
+        dat <- data[!is.na(data[,g]),g]
+        group <- c(group, rep(g, length(dat)))
+        value <- append(value, dat)
+    }                      
+    df <- data.frame(value=value,group=group)
+}
+
+varianceTest<-function(data, alternative="two.sided", level=0.95) {
+    rdata <- rearrange.df(data)
+    ngourp <- length(unique(rdata$group))
+    ret <- list(
+        title = "",
+        labels = colnames(data),
+        test = list(
+            statistic = NA,
+            pvalue = NA
         )
     )
-}
-varianceTest<-function(data) {
-    cnum<-ncol(rdata)
-    if (cnum == 2) {
-        res <- var.test(data[,1], data[,2])
-
+    if (ngourp == 2) {
+        res <- var.test(value ~ group, data=rdata, alternative=alternative, conf.level=level)
+        ret$alternative = alternative
+        ret$conf.level = level
+        ret$test$df = unname(res$parameter)
+        attributes(res$conf.int) <- NULL
+        ret$test$confidence = res$conf.int
     }
     else {
         loadLibraries(c("car"))
-        data<-rearrangeDF(data, type="", nfactor=1)
-        res <- bartlett.test(Value ~ Group, data = data)
-
-
+        res <- bartlett.test(value ~ group, data=rdata)
+        ret$test$df = unname(res$parameter)
     }
+    ret$title = res$method
+    ret$test$statistic = unname(res$statistic)
+    ret$test$pvalue = res$p.value
+    return(structure(ret))
 }
+
+
 twoComp<-function(data, parametric=TRUE) {
     if(parametric) {
 
