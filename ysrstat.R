@@ -233,3 +233,33 @@ exportResult<-function(result, format="csv", file=""){
     cat(paste(names, collapse=","),"\n",sep="", file = body)
     close(body)
 }
+
+printResult <- function(result) {
+  if (format == "raw") print(report)
+  else if (display == "csv") {
+    names<-names(report)
+    cat(report$method[[1]],"\n")
+    if (length(report$param)) {
+      pkeys = names(report$param)
+      for (p in 1:length(pkeys)) {
+        cat(paste(pkeys[p], ": ", report$param[pkeys[p]][[1]]),"\n",sep="")
+      }
+    }
+    if (length(report$array)) {
+      cat(",",paste(report$array$title, collapse=","), "\n", sep="")
+      akeys = names(report$array)
+      for (a in 1:length(akeys)) {
+        if (akeys[a] != "title") cat(akeys[a], ",", paste(report$array[akeys[a]][[1]], collapse=","),"\n",sep="")
+      }
+    }
+    if (length(report$table)) {
+      tkeys = names(report$table)
+      nrow <- length(report$table[tkeys[0]])
+      for (r in 1:nrow) {
+        for (t in 1:length(tkeys)) {
+          cat(paste(report$array[akeys[a]], report$array[akeys[a]][r],"\n",sep=""))
+        }
+      }
+    }
+  }
+}
