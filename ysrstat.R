@@ -183,24 +183,63 @@ varianceTest<-function(data, alternative="two.sided", level=0.95) {
     ret$test$pvalue = res$p.value
     return(structure(ret))
 }
-
-
-twoComp<-function(data, parametric=TRUE) {
+twoComp<-function(data, alternative=alternative, parametric=TRUE, var=TRUE, paired=FALSE) {
+    cnames <- colnames(data)
+    ret <- list(
+        title = "",
+        alternative=alternative,
+        labels = c(cnames[1], cnames[2]),
+        test = list(
+            statistic = NA,
+            pvalue = NA
+        )
+    )
     if(parametric) {
-
+        if (paired) {
+            res <- t.test(data[,1], data[,2], paired=paired)
+            str(res)
+        }
+        else {
+            res <- t.test(data[,1], data[,2], var=var)
+            str(res)
+        }
+        attributes(res$estimate) <- NULL
+        ret$test$means = res$estimate
+        attributes(res$conf.int) <- NULL
+        ret$test$confidence = res$conf.int        
+        ret$test$df = unname(res$parameter)
+        ret$test$stderr = unname(res$stderr)
     }
     else {
-        res = wilcox.test(data[,1], data[,2])
-
+        res <- wilcox.test(data[,1], data[,2], paired=paired)
     }
+    ret$title <- res$method
+    ret$test$statistic <- unname(res$statistic)
+    ret$test$pvalue <- res$p.value
+    return(structure(ret))
 }
+
 kruskalTest<-function(data) {
-    data<-rearrangeDF(data,nfactor=1)
-    res <- kruskal.test(Value ~ Group, data = data)
-
+    rdata <- rearrange.df(data)
+    ngourp <- length(unique(rdata$group))
+    ret <- list(
+        title = "",
+        labels = colnames(data),
+        test = list(
+            df = NA,
+            statistic = NA,
+            pvalue = NA
+        )
+    )
+    res <- kruskal.test(value ~ group, data = rdata)
+    ret$title = res$method
+    ret$test$df = unname(res$parameter)
+    ret$test$statistic = unname(res$statistic)
+    ret$test$pvalue = unname(res$p.value)
+    return(structure(ret))
 }
 
-mulComp<-function(data, method) {
+multiComp<-function(data, method) {
     
     data <- rearrangeDF(data, nfactor=1)
     if (method == "dunnett") {
@@ -266,22 +305,8 @@ lrtest<-function(data) {
 
 exportResult<-function(result, format="csv", file=""){
     resfile <- file(file)
-    cat(result["title"], "\n", sep="", file = resfile, fill = TRUE)
+    cat(result$title, "\n", sep="", file = resfile, fill = TRUE)
     
-    
-    close(header)
-    body <- file(path, open="a")
-    names<-names[names!="method"]
-    cat(paste(names, collapse=","),"\n",sep="", file = body)
-    close(body)
-
-    header <- file(path)
-    cat(report["method"][[1]], "\n", sep="", file = header, fill = TRUE)
-    close(header)
-    body <- file(path, open="a")
-    names<-names[names!="method"]
-    cat(paste(names, collapse=","),"\n",sep="", file = body)
-    close(body)
 }
 
 printResult <- function(result) {
