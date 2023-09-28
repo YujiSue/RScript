@@ -197,11 +197,9 @@ twoComp<-function(data, alternative=alternative, parametric=TRUE, var=TRUE, pair
     if(parametric) {
         if (paired) {
             res <- t.test(data[,1], data[,2], paired=paired)
-            str(res)
         }
         else {
             res <- t.test(data[,1], data[,2], var=var)
-            str(res)
         }
         attributes(res$estimate) <- NULL
         ret$test$means = res$estimate
