@@ -127,7 +127,7 @@ normalityTest <- function(data, method, alternative="two.sided") {
     for (f in c(1:cnum)) {
         dat <- data[!is.na(data[,f]),f]
         if (method == "ks") {
-            ret$alternative = alternative,
+            ret$alternative = alternative
             res <- ks.test(dat, "pnorm", mean = mean(dat), sd = sd(dat), alternative = alternative)
         }
         else if (method == "sw") res <- shapiro.test(dat)
