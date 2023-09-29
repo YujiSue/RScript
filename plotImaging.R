@@ -12,3 +12,23 @@ plotimaging<-function(mean, stdev) {
 	plot(t,ylim=c(limmin,limmax),mean,type="l")
 	polygon(t2,area,col=rgb(0.5,0.5,0.5,0.3),border=NA)
 }
+plotimaging2<-function(mean1, stdev1, mean2, stdev2) {
+	n<-length(mean1)
+	t<-c(1:n)
+	t2<-c(t,rev(t))
+	up1<-mean1+stdev1
+	low1<-mean1-stdev1
+	area1<-c(up1,rev(low1))
+	up2<-mean2+stdev2
+	low2<-mean2-stdev2
+	area2<-c(up2,rev(low2))
+	max<-max(up1,up2)
+	min<-min(low1,low2)
+	limmax<-(max-max%%5)+5
+	limmin<-(min-(min%%5))
+	plot(t,mean1,ylim=c(0,1),type="l",col=rgb(1,0,0))
+	polygon(t2,area1,col=rgb(0.8,0,0,0.3),border=NA)
+	par(new=T)
+	plot(t,mean2,ylim=c(0,1),type="l",col=rgb(0,0,1))
+	polygon(t2,area2,col=rgb(0,0,0.8,0.3),border=NA)
+}
