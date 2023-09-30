@@ -434,6 +434,20 @@ lrtest<-function(data) {
 
 }
 
+survivalTest<-function(data, mode) {
+    loadLibraries(c("survival"))
+
+    if (mode == "lrank") {
+        
+        
+    }
+    else if (mode == "gwilcox") {
+
+    }
+    
+}
+
+
 exportResult<-function(result, format="csv", file=""){
     resfile <- file(file)
     cat(result$title, "\n", sep="", file = resfile, fill = TRUE)
