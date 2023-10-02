@@ -352,13 +352,6 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
         ret$test$coefficients = rep(0, cnum-1)
         ret$test$statistic <- rep(0, cnum-1)
         ret$test$pvalue <- rep(0, cnum-1)
-        
-        #cat("compare,rho,t-statistic,p-value\n")
-        #for (i in 2:gcount) {
-            #cat(paste(
-            #    paste(colnames(data)[1], "vs", colnames(data)[i], sep=" "),
-            #    rho, tvals[i], pvals[i], sep=","), "\n")
-        #}
     }
     else if (method == "tukey") {
         res = glht(aov(value ~ group, data=rdata), alternative=alternative, linfct=mcp(group="Tukey"))
@@ -387,49 +380,41 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
         }
     }
     else if (method == "scheffe") {
-
-        
-# Test
-nrows <- table(group)
-gcount <- length(nrows)
-total <- sum(nrows)
-means <- c()
-uvars <- c()
-for (g in 1:gcount) {
-    means <- append(means, mean(values[group==g]))
-    uvars <- append(uvars, var(values[group==g]))
-}
-df <- total - gcount
-Vw <- sum(uvars*(nrows-1))/df
-ths <- c()
-vths <- c()
-confs <- c()
-fvals <- c()
-pvals <- c()
-for (i in 1:gcount) {
-    if (i == gcount) break
-    k <- i + 1
-    for (j in k:gcount) {
-        g0 <- (1:gcount)[-c(i, j)]
-        n0 <- gcount - 2
-        weight <- rep(c(1, -1, 0), c(1, 1, n0))[order(c(c(i), c(j), g0))]
-        theta <- sum(weight*means)
-        ths <- append(ths, theta)
-        Vtheta <- Vw*sum(weight^2/nrows)
-        vths <- append(vths, Vtheta)
-        confs <- append(confs, theta - c(1, -1) * sqrt((gcount-1)*qf(alpha, (gcount-1), df, lower.tail=FALSE)*Vtheta))
-        F0 <- theta^2/(gcount-1)/Vtheta
-        fvals <- append(fvals, F0)
-        p <- pf(F0, (gcount-1), df, lower.tail=FALSE)
-        pvals <- append(pvals, p)
+        nrows <- table(group)
+        gcount <- length(nrows)
+        total <- sum(nrows)
+        means <- c()
+        uvars <- c()
+        for (g in 1:gcount) {
+            means <- append(means, mean(values[group==g]))
+            uvars <- append(uvars, var(values[group==g]))
+        }
+        df <- total - gcount
+        Vw <- sum(uvars*(nrows-1))/df
+        ths <- c()
+        vths <- c()
+        confs <- c()
+        fvals <- c()
+        pvals <- c()
+        for (i in 1:gcount) {
+            if (i == gcount) break
+            for (j in (i+1):gcount) {
+                g0 <- (1:gcount)[-c(i, j)]
+                n0 <- gcount - 2
+                weight <- rep(c(1, -1, 0), c(1, 1, n0))[order(c(c(i), c(j), g0))]
+                theta <- sum(weight*means)
+                ths <- append(ths, theta)
+                Vtheta <- Vw*sum(weight^2/nrows)
+                vths <- append(vths, Vtheta)
+                confs <- append(confs, theta - c(1, -1) * sqrt((gcount-1)*qf(alpha, (gcount-1), df, lower.tail=FALSE)*Vtheta))
+                F0 <- theta^2/(gcount-1)/Vtheta
+                fvals <- append(fvals, F0)
+                p <- pf(F0, (gcount-1), df, lower.tail=FALSE)
+                pvals <- append(pvals, p)
+            }
+        }
     }
-}
-
-
-    }
-    
-    
-
+}   
 
 lrtest<-function(data) {
 
