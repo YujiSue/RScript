@@ -72,6 +72,7 @@ fisherTest<-function(data) {
         mat[2,2] = data[2, 3]
         res <- fisher.test(mat)
         
+        str(res)
     }
     else {
         loadLibraries(c("BiocManager"))
@@ -84,6 +85,7 @@ fisherTest<-function(data) {
         }
         res <- fisher.multcomp(mat, p.method = correction)
         
+        str(res)
     }
 }
 mcnemarTest<-function(data) {
