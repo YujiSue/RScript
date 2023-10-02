@@ -61,7 +61,7 @@ binomTest<-function(data, prob) {
     }
     
 }
-fisherTest<-function(data) {
+fisherTest<-function(data, correction="") {
     colnames <- colnames(data)
     cnum <- length(colnames) - 1
     if (cnum == 2) {
