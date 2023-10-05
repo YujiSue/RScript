@@ -1,6 +1,7 @@
 #addLabels<-function(plot, )
 
 
+
 barChart<-function(data, x, y,
                     bar_identify="color", 
                     error_bar, 
@@ -9,7 +10,6 @@ barChart<-function(data, x, y,
                     y_label = "Y",
                     legend_label = Factor
                     ) {
-    loadLibraries(c("dplyr", "ggplot2", "ggsignif", "ggbeeswarm"))
     if (bar_identify == "none") {
         plot <- ggplot(data=data, aes(y=y, x=x))
     }

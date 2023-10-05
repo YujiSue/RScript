@@ -61,9 +61,21 @@ binomTest<-function(data, prob) {
     }
     
 }
-fisherTest<-function(data, correction="") {
-    colnames <- colnames(data)
-    cnum <- length(colnames) - 1
+fisherTest<-function(data, alternative, correction="bonferroni") {
+    factor1 <- colnames(data)[2:ncol(data)]
+    factor2 <- data[,1]
+    cnum <- length(factor1)
+    ret <- list(
+        title = "",
+        factor = list(
+            '1' <- factor1,
+            '2' <- factor2
+        ),
+        test = list(
+            compare = combn(1:cnum, 2),
+            pvalue = NA
+        )        
+    )
     if (cnum == 2) {
         mat <- matrix(rep(0, cnum * 2), nrow = 2)
         mat[1,1] = data[1, 2]
@@ -71,12 +83,13 @@ fisherTest<-function(data, correction="") {
         mat[2,1] = data[2, 2]
         mat[2,2] = data[2, 3]
         res <- fisher.test(mat)
-        
-        str(res)
+        ret$title <- res$method
+        ret$alternative = res$alternative
+        ret$test$pvalue <- c(res$p.value)
     }
     else {
         loadLibraries(c("BiocManager"))
-        loadBMLibraries(C("mixOmics"))
+        loadBMLibraries(c("mixOmics"))
         loadLibraries(c("RVAideMemoire"))
         mat <- matrix(rep(0, cnum * 2), nrow = 2)
         for (i in 1:cnum) {
@@ -84,11 +97,14 @@ fisherTest<-function(data, correction="") {
             mat[2,i] = data[2, i + 1]
         }
         res <- fisher.multcomp(mat, p.method = correction)
-        
-        str(res)
+        ret$title <- res$method
+        ret$correction <- res$p.adjust.method
+        attributes(res$p.value) <- NULL
+        ret$test$pvalue <- res$p.value
     }
+    return(structure(ret))
 }
-mcnemarTest<-function(data) {
+mcnemarTest <- function(data) {
     factor1 <- colnames(data)[2:ncol(data)]
     factor2 <- data[,1]
     ret <- list(
@@ -98,18 +114,24 @@ mcnemarTest<-function(data) {
             '2' <- factor2
         ),
         test = list(
+            compare = combn(1:2, 2),
             statistic = NA,
-            pvalue = NA,
-            df = NA
+            pvalue = NA
         )        
     )
     mat <- matrix(c(data[1, 2], data[1, 2], data[2, 2], data[2, 3]), nrow = 2, byrow=T)
     res <- mcnemar.test(mat)
-    ret$title = res$method
+    ret$title <- res$method
     ret$test$statistic = unname(res$statistic)
-    ret$test$pvalue = res$p.value
-    ret$test$df = unname(res$parameter)
+    ret$test$pvalue <- res$p.value
     return(structure(ret))
+}
+chisqTest <- function(data) {
+    
+
+
+    res <- chisq.test(mat)
+    str(res)
 }
 normalityTest <- function(data, method, alternative="two.sided") {
     colnames <- colnames(data)
@@ -143,17 +165,48 @@ normalityTest <- function(data, method, alternative="two.sided") {
 }
 
 
-rearrange.df<-function(data) {
+rearrange.df<-function(data, mode='1w') {
     colnames<-colnames(data)
     cnum<-length(colnames)
-    value<-c()
-    group<-c()
-    for (g in c(1:cnum)) {
-        dat <- data[!is.na(data[,g]),g]
-        group <- c(group, rep(g, length(dat)))
-        value <- append(value, dat)
-    }                      
-    df <- data.frame(value=value,group=group)
+    if (mode == '1w') {
+        value<-c()
+        group<-c()
+        for (g in c(1:cnum)) {
+            dat <- data[!is.na(data[,g]),g]
+            group <- c(group, rep(g, length(dat)))
+            value <- append(value, dat)
+        }                      
+        df <- data.frame(value=value,group=group)
+    }
+    else if (mode == '1wp') {
+        value<-c()
+        index<-c()
+        group<-c()
+        for (g in c(2:cnum)) {
+            index <- c(index, data[!is.na(data[,g]),1])
+            dat <- data[!is.na(data[,g]),g]
+            group <- c(group, rep(g, length(dat)))
+            value <- append(value, dat)
+        }                      
+        df <- data.frame(value=value,index=index,group=group)
+    }
+    else if (mode == 'ts') {
+        value<-c()
+        time<-c()
+        group<-c()
+        for (g in c(2:cnum)) {
+            time <- c(index, data[!is.na(data[,g]),1])
+            dat <- data[!is.na(data[,g]),g]
+            group <- c(group, rep(g, length(dat)))
+            value <- append(value, dat)
+        }                      
+        df <- data.frame(value=value,time=time,group=group)
+    }
+    else if (mode == 'mvar') {
+
+        
+    }
+    return(df)
 }
 
 varianceTest<-function(data, alternative="two.sided", level=0.95) {
@@ -192,6 +245,7 @@ twoComp<-function(data, alternative=alternative, parametric=TRUE, var=TRUE, pair
         alternative=alternative,
         labels = c(cnames[1], cnames[2]),
         test = list(
+            compare = combn(1:2, 2),
             statistic = NA,
             pvalue = NA
         )
@@ -219,16 +273,46 @@ twoComp<-function(data, alternative=alternative, parametric=TRUE, var=TRUE, pair
     return(structure(ret))
 }
 aov1Test<-function(data,paired=False) {
-    rdata <- rearrange.df(data)
+    ret <- list(
+        title = "One-way ANOVA",
+        labels = NA,
+        test = list(
+            statistic = NA,
+            pvalue = NA
+        )
+    )
     if (paired) {
+        rdata <- rearrange.df(data, '1wp')
+        res <- anova(aov(value ~ group + Error(index/group), data=rdata))
+
+        str(res)
+
+        ret$labels = colnames(data)[2:ncol(data)]
 
     }
     else {
+        rdata <- rearrange.df(data, '1w')
+        res <- anova(aov(value ~ group, data=rdata))
+
+        str(res)
+
+        ret$labels = colnames(data)
+
 
     }
 }
+
+manovaTest<-function(data) {
+    rdata <- rearrange.df(data, "")
+    
+    res <- manova( ~ groups, data = rdata)
+
+
+}
+
+
 kruskalTest<-function(data) {
-    rdata <- rearrange.df(data)
+    rdata <- rearrange.df(data,'1w')
     ngourp <- length(unique(rdata$group))
     ret <- list(
         title = "",
@@ -247,19 +331,18 @@ kruskalTest<-function(data) {
     return(structure(ret))
 }
 friedmanTest<-function(data) {
-    rdata <- rearrange.df(data)
+    rdata <- rearrange.df(data,'1wp')
     ngourp <- length(unique(rdata$group))
     ret <- list(
         title = "",
-        labels = colnames(data),
+        labels = colnames(data)[2:ncol(data)],
         test = list(
             df = NA,
             statistic = NA,
             pvalue = NA
         )
     )
-    res <- friedman.test(value ~ group, data = rdata)
-    str(res)
+    res <- friedman.test(value ~ group | index, data = rdata)
     ret$title = res$method
     ret$test$df = unname(res$parameter)
     ret$test$statistic = unname(res$statistic)
@@ -267,7 +350,7 @@ friedmanTest<-function(data) {
     return(structure(ret))
 }
 multiComp<-function(data, method, alternative="two.sided", level=0.95) {
-    rdata <- rearrange.df(data)
+    rdata <- rearrange.df(data, '1w')
     ret <- list(
         title = "",
         alternative=alternative,
@@ -285,14 +368,13 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
         res <- summary(res)
         cnum <- ncol(data)
         ret$title <- "Dunnett's Test"
-        ret$test$compare <- rep('', cnum-1)
+        ret$test$compare <- combn(2:cnum, 1),
         ret$test$sigma = rep(0, cnum-1)
         ret$test$coefficients = rep(0, cnum-1)
         ret$test$statistic <- rep(0, cnum-1)
         ret$test$pvalue <- rep(0, cnum-1)
         ret$test$confidence = rep(NA, cnum-1)
         for (i in 2:cnum) {
-            ret$test$compare[i-1] <- cat("1:", i ,sep="")
             ret$test$sigma[i-1] <- res$test$sigma[i-1]
             ret$test$coefficients[i-1] <- res$test$coefficients[i-1]
             ret$test$statistic[i-1] <- res$test$tstat[i-1]
@@ -303,8 +385,6 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
     }
     else if (method == "steel") {
         cnum <- ncol(data)
-
-
         nrows <- table(rdata$group)
         gcount <- length(nrows)
         ctrl <- rdata$values[rdata$group == 1]
@@ -417,6 +497,12 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
 }   
 
 lrtest<-function(data) {
+    loadLibraries(c("lmtest"))
+
+    control <- lm(value ~ )
+    model <- lm(value ~ group + factor)
+
+    res <- lrtest(control, model)
 
 
 }
