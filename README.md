@@ -9,7 +9,7 @@ R scripts used for research, teaching, and other administrative tasks.
 - McNemar test  
 - Normality test  
  &nbsp;&nbsp;&nbsp;&nbsp;(KS, SH, AD)  
-- $ \chi^2 $ test  
+- $\chi^2$ test  
 - F test  
 - Bartlett test  
 - t test (Student, Welch, Paired)  
