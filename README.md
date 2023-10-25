@@ -19,9 +19,9 @@ R scripts used for research, teaching, and other administrative tasks.
 - Friedman test  
 - MANOVA  
 - Multiple comparison test  
- &nbsp;&nbsp;&nbsp;&nbsp;(Dunnett, TukeyHSD, Scheffe, Steel, Steel-DWass)  
+ &nbsp;&nbsp;&nbsp;&nbsp;(Dunnett, TukeyHSD, Scheffe, Steel, Steel-Dwass)  
 - Survival rate test  
-  &nbsp;&nbsp;&nbsp;&nbsp;(Log-rank, Generalized Wilcoxon)  
+  &nbsp;&nbsp;&nbsp;&nbsp;(Log-rank, Cox regression)  
 - Likelihood ratio test  
  
 ### Usage | 使用方法
