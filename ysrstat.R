@@ -141,7 +141,9 @@ normalityTest <- function(data, method, alternative="two.sided") {
     }
     ret <- list(
         title = "",
-        labels = colnames,
+        factor = list(
+            '1' = colnames
+        ),
         test = list(
             count = rep(NA, cnum),
             statistic = rep(NA, cnum),
@@ -214,7 +216,9 @@ varianceTest<-function(data, alternative="two.sided", level=0.95) {
     ngourp <- length(unique(rdata$group))
     ret <- list(
         title = "",
-        labels = colnames(data),
+        factor = list(
+            '1' <- colnames(data)
+        ),
         test = list(
             statistic = NA,
             pvalue = NA
@@ -243,7 +247,9 @@ twoComp<-function(data, alternative=alternative, parametric=TRUE, var=TRUE, pair
     ret <- list(
         title = "",
         alternative=alternative,
-        labels = c(cnames[1], cnames[2]),
+        factor = list(
+            '1' <- c(cnames[1], cnames[2])
+        ),
         test = list(
             compare = combn(1:2, 2),
             statistic = NA,
@@ -368,7 +374,7 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
         res <- summary(res)
         cnum <- ncol(data)
         ret$title <- "Dunnett's Test"
-        ret$test$compare <- combn(2:cnum, 1),
+        ret$test$compare <- combn(2:cnum, 1)
         ret$test$sigma = rep(0, cnum-1)
         ret$test$coefficients = rep(0, cnum-1)
         ret$test$statistic <- rep(0, cnum-1)
@@ -499,7 +505,7 @@ multiComp<-function(data, method, alternative="two.sided", level=0.95) {
 lrtest<-function(data) {
     loadLibraries(c("lmtest"))
 
-    control <- lm(value ~ )
+    control <- lm(value ~ group)
     model <- lm(value ~ group + factor)
 
     res <- lrtest(control, model)
