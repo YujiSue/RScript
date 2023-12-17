@@ -17,7 +17,6 @@ R scripts used for research, teaching, and other administrative tasks.
 - ANOVA  
 - Kluscal-Wallis test  
 - Friedman test  
-- MANOVA  
 - Multiple comparison test  
  &nbsp;&nbsp;&nbsp;&nbsp;(Dunnett, TukeyHSD, Scheffe, Steel, Steel-Dwass)  
 - Survival rate test  
